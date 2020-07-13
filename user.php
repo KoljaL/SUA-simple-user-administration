@@ -2,39 +2,39 @@
 if( isset($_GET['id']) ){$id = $_GET['id'];}
 
 
-// aktuelle Zeit für das "geaendert" FIELD		$dt = new DateTime("now", new DateTimeZone('Europe/Berlin'));
+// aktuelle Zeit für das "geaendert" FIELD
 $dt = new DateTime("now", new DateTimeZone('Europe/Berlin'));
 $local_time =  $dt->format('d.m.Y H:i');
 
 
 // make connection
-$db = new SQLite3('data.db');
+$db = new SQLite3('data1.db');
 $tablename = 'users';
 
 
 // create a new user
-if (isset($_POST['create_data'])) {
-        // update the userrow
-        $id = $db->querySingle("SELECT id FROM $tablename WHERE id = (SELECT MAX(id) FROM $tablename) order by id desc limit 1") + 1;
-        $name = ['id'];
-        $value = [$id];
-        foreach ($_POST as $param_name => $param_val) {
-            if ($param_name != 'create_data' && $param_name != 'id') {
-                $name[] = $param_name;
-                $value[] = $param_val;
-            }
-        }
-        $query = "INSERT INTO $tablename (" . implode(",", $name) . ") VALUES ('" . implode("','", $value) . "')";
-        $db->exec($query);
+if (isset($_POST['new_user'])) {
+  $name = [];
+  $value = [];
+  foreach ($_POST as $param_name => $param_val) {
+    if ($param_name != 'new_user' && $param_name != 'id') {
+      $name[] = $param_name;
+      $value[] = $param_val;
+    }
+  }
+  $query = "INSERT INTO $tablename (" . implode(",", $name) . ") VALUES ('" . implode("','", $value) . "')";
+  $db->exec($query);
+  // get the id of the new user to show him
+  $id = $db->querySingle("SELECT id FROM $tablename WHERE id = (SELECT MAX(id) FROM $tablename) order by id desc limit 1");
 }
 
 // update the user data
-if (isset($_POST['update_data'])) {
+if (isset($_POST['update_user'])) {
     $id = $_POST['id'];
     //echo "ID: ".array_values($row)[$id]['id'];
     //print_r($_POST);
     foreach ($_POST as $param_name => $param_val) {
-        if ($param_name != 'update_data' && $param_name != 'id' ) {
+        if ($param_name != 'update_user' && $param_name != 'id' ) {
             $query = "UPDATE $tablename set  $param_name ='$param_val' WHERE id=$id ";
             $db->exec($query);
         }
@@ -42,7 +42,7 @@ if (isset($_POST['update_data'])) {
 }
 
 // get the data
-if(!isset($_GET['create'])){
+if(!isset($_GET['new'])){
     $result = $db->query("SELECT * FROM $tablename WHERE id = $id");
     $result->fetchArray(SQLITE3_NUM);
     $fieldnames = []; // all colum-names
@@ -69,54 +69,64 @@ if(!isset($_GET['create'])){
     }
 }
 
+
+
 // case allocation
 if(isset($_GET['update'])){
   $id           = $rows[$key]['id'];
   $textarea_css = "style=\"border: 1px solid grey; \"";
   $form_action  = "user.php?id=".$rows[$key]['id'];
+  $update_link  = "&nbsp;";
+  $delete_link  = "&nbsp;";
+
   // PERSON
   $erstellt    = $rows[$key]['erstellt'];
   $geaendert   = $rows[$key]['geaendert'];
   $name        = "<input type=\"text\" name=\"Name\" size=\"8\" value=\"".$rows[$key]['Name']."\">";
-  $name_header = "<input name=\"update_data\" type=\"submit\" form=\"formular\" value=\"Änderungen für ".$rows[$key]['Name']." speichern\"> ";
-  $name_delete = $rows[$key]['Name'] ." ". $rows[$key]['Nachname'];
+  $name_header = "<input name=\"update_user\" type=\"submit\" form=\"formular\" value=\"Änderungen für ".$rows[$key]['Name']." speichern\"> ";
   $nachname    = "<input type=\"text\" name=\"Nachname\" size=\"8\" value=\"".$rows[$key]['Nachname']."\">";
   $wg          = "<input type=\"text\" name=\"WG\" size=\"21\" value=\"".$rows[$key]['WG']."\">";
   $eingezogen  = "<input type=\"text\" name=\"eingezogen\" size=\"21\" value=\"".$rows[$key]['eingezogen']."\">";
-  $ausgezogen  ="<input type=\"text\" name=\"ausgezogen\" size=\"21\" value=\"".$rows[$key]['ausgezogen']."\">";
+  $ausgezogen  = "<input type=\"text\" name=\"ausgezogen\" size=\"21\" value=\"".$rows[$key]['ausgezogen']."\">";
   $telefon     = "<input type=\"text\" name=\"Telefon\" size=\"21\" value=\"".$rows[$key]['Telefon']."\">";
   $email       = "<input type=\"text\" name=\"Email\" size=\"21\" value=\"".$rows[$key]['Email']."\">";
   $freifeld_p  = "<textarea name=\"Freifeld_P\" cols=\"45\" rows=\"30\">".$rows[$key]['Freifeld_P']."</textarea>";
   // PERSON
+
 }
-elseif(isset($_GET['create'])){
+elseif(isset($_GET['new'])){
   $id           = $rows[$key]['id'];
   $textarea_css = "style=\"border: 1px solid grey; \"";
   $form_action  = "user.php";
+  $update_link  = "&nbsp;";
+  $delete_link  = "&nbsp;";
+
   // PERSON
   $erstellt    = "<input type=\"text\" name=\"erstellt\" size=\"18\" readonly value=\"".$local_time."\">";
   $geaendert   = "<input type=\"text\" name=\"geaendert\" size=\"18\" readonly value=\"".$local_time."\">";
   $name        = "<input type=\"text\" name=\"Name\" size=\"8\"  >";
-  $name_header = "<input name=\"create_data\" type=\"submit\" form=\"formular\" value=\"neue Person anlegen\"> ";
-  $name_delete = $rows[$key]['Name'] ." ". $rows[$key]['Nachname'];
+  $name_header = "<input name=\"new_user\" type=\"submit\" form=\"formular\" value=\"neue Person anlegen\"> ";
   $nachname    = "<input type=\"text\" name=\"Nachname\" size=\"8\" value=\"".$rows[$key]['Nachname']."\">";
   $wg          = "<input type=\"text\" name=\"WG\" size=\"21\" value=\"".$rows[$key]['WG']."\">";
   $eingezogen  = "<input type=\"text\" name=\"eingezogen\" size=\"21\" value=\"".$rows[$key]['eingezogen']."\">";
-  $ausgezogen  ="<input type=\"text\" name=\"ausgezogen\" size=\"21\" value=\"".$rows[$key]['ausgezogen']."\">";
+  $ausgezogen  = "<input type=\"text\" name=\"ausgezogen\" size=\"21\" value=\"".$rows[$key]['ausgezogen']."\">";
   $telefon     = "<input type=\"text\" name=\"Telefon\" size=\"21\" value=\"".$rows[$key]['Telefon']."\">";
   $email       = "<input type=\"text\" name=\"Email\" size=\"21\" value=\"".$rows[$key]['Email']."\">";
   $freifeld_p  = "<textarea name=\"Freifeld_P\" cols=\"45\" rows=\"30\">".$rows[$key]['Freifeld_P']."</textarea>";
   // PERSON
+
 } else {
   $id           = $rows[$key]['id'];
   $textarea_css = "style=\"white-space: pre-line\"";
   $form_action  = "user.php?id=".$rows[$key]['id'];
+  $update_link  = "<a class=\"blue\" href=\"user.php?update&amp;id=".$id."\">bearbeiten</a>";
+  $delete_link  = "<a class=\"red\" href=\"index.php?delete&amp;id=".$id."\" onclick=\"return confirm('Soll ".strtoupper($rows[$key]['Name'] ." ". $rows[$key]['Nachname'])." wirklich gelöscht werden?');\">löschen</a>";
+
   // PERSON
   $erstellt    = $rows[$key]['erstellt'];
   $geaendert   = $rows[$key]['geaendert'];
   $name        = $rows[$key]['Name'];
   $name_header = $rows[$key]['Name'];
-  $name_delete = $rows[$key]['Name'] ." ". $rows[$key]['Nachname'];
   $nachname    = $rows[$key]['Nachname'];
   $wg          = $rows[$key]['WG'];
   $eingezogen  = $rows[$key]['eingezogen'];
@@ -125,6 +135,7 @@ elseif(isset($_GET['create'])){
   $email       = $rows[$key]['Email'];
   $freifeld_p  = $rows[$key]['Freifeld_P'];
   // PERSON
+
 }
 ?>
 
@@ -138,7 +149,15 @@ elseif(isset($_GET['create'])){
     /* table > tbody > tr > td{border: 1px solid red; border-collapse: collapse;}
     table > tbody > tr > td > table > tbody > tr > td{border: 1px solid blue; border-collapse: collapse;}
     table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td{border: 1px solid green; border-collapse: collapse;} */
+
+    body{color:#333436; }
     a{text-decoration: none;}
+    a.blue, a.blue:visited{color: #2d399a;}
+    a.blue:hover{color: #1b225c;}
+    a.green, a.green:visited{color: #3a9a2d;}
+    a.green:hover{color: #173e12;}
+    a.red, a.red:visited{color: #9a2d3a;}
+    a.red:hover{color: #3e1217;}
     td{padding: 1px;}
     td{vertical-align: top; text-align: left;}
     td>h1{display: inline;font-size: 2em;font-weight: bold; }
@@ -179,10 +198,10 @@ elseif(isset($_GET['create'])){
         <td class="header">
         <!-- HYPERLINKS -->
           <table>
-            <tr><td class="links"><a href="index.php">Übersicht</a></td></tr>
+            <tr><td class="links"><a class="green" href="index.php">Übersicht</a></td></tr>
             <tr><td class="links">&nbsp; </td></tr>
-            <tr><td class="links"><a href="user.php?update&amp;id=<?echo $id;?>">bearbeiten</a></td></tr>
-            <tr><td class="links red"><a href="index.php?delete&amp;id=<? echo $id; ?>" onclick="return confirm('Soll <?php echo strtoupper($name_delete); ?> wirklich gelöscht werden?');">delete</a></td></tr>
+            <tr><td class="links"><? echo $update_link ?></td></tr>
+            <tr><td class="links"><? echo $delete_link; ?></td></tr>
           </table>
         <!-- HYPERLINKS -->
         </td>
