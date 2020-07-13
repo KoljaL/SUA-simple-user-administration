@@ -1,13 +1,16 @@
 <?php
 
+$app_name = 'Simple User Administration';
 // aktuelle Zeit für das "geaendert" FIELD
 $dt = new DateTime("now", new DateTimeZone('Europe/Berlin'));
 $local_time =  $dt->format('d.m.Y H:i');
+$local_time_sort =  $dt->format('Y_m_d_H_i_');
 
 
 // make connection
-$db = new SQLite3('data1.db');
+$filename = 'files/data.db';
 $tablename = 'users';
+$db = new SQLite3($filename);
 
 
 //////////////////// JUST FOR THE FIRST RUN
@@ -44,30 +47,17 @@ if ($first_run){
 //////////////////// JUST FOR THE FIRST RUN
 
 
-// update the row
-if (isset($_POST['update_data'])) {
-    $id = $_POST['id'];
-    //echo "ID: ".array_values($row)[$id]['id'];
-    //print_r($_POST);
-    foreach ($_POST as $param_name => $param_val) {
-        if ($param_name != 'update_data' && $param_name != 'id' ) {
-            $query = "UPDATE $tablename set  $param_name ='$param_val' WHERE id=$id ";
-            $db->exec($query);
-        }
-    }
-}
-
 // delete row
 if (isset($_GET['delete'])) {
     $id = $_GET['id'];
     $query = "DELETE FROM $tablename WHERE id=$id";
 		$db->exec($query);
+    copy($filename, "files/archive/".$local_time_sort."delete_".$id.".db");
 }
 
-
+// get the data
 // show only this columns in the index    'erstellt', 'geaendert',
 $input2=['id', 'Name', 'Nachname', 'WG', 'eingezogen', 'ausgezogen', 'Telefon', 'Email'];
-// get the data
 $result = $db->query("SELECT ".implode(', ', $input2)." FROM $tablename");
 //$result = $db->query("SELECT * FROM $tablename");
 $result->fetchArray(SQLITE3_NUM);
@@ -90,6 +80,10 @@ while ($row = $result->fetchArray(SQLITE3_NUM)) {
   <meta charset="utf-8">
 	<title>Data List</title>
 	<style>
+  /* table > tbody > tr > td{border: 1px solid red; border-collapse: collapse;}
+  table > tbody > tr > td > table > tbody > tr > td{border: 1px solid blue; border-collapse: collapse;}
+  table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td{border: 1px solid green; border-collapse: collapse;} */
+
   body{color:#333436; }
   a{text-decoration: none;}
   a.blue, a.blue:visited{color: #2d399a;}
@@ -98,40 +92,94 @@ while ($row = $result->fetchArray(SQLITE3_NUM)) {
   a.green:hover{color: #173e12;}
   a.red, a.red:visited{color: #9a2d3a;}
   a.red:hover{color: #3e1217;}
+  td>h1{display: inline;font-size: 2em;font-weight: bold; }
+  td>h2{display: inline;font-size: 1.5em;font-weight: bold; }
+  td>h3{display: inline;font-size: 1.2em;font-weight: bold; }
 	table, tr, td{border-style:none;  border-bottom:0px solid #eee; border-collapse: collapse;}
   tr.pointer{cursor:pointer;}
+  tr.hover{transition: 0.3s;}
   tr.hover:hover:nth-child(5n+1) {background: #9fa6e3}
   tr.hover:hover:nth-child(5n+2) {background: #9fe3cd}
   tr.hover:hover:nth-child(5n+3) {background: #e3b29f}
   tr.hover:hover:nth-child(5n+4) {background: #c2e39f}
   tr.hover:hover:nth-child(5n+5) {background: #e39fdd}
-  td.logo{padding-left:6px; width:310px; height:110px;}
-  td.headline{font-weight: bold;}
-	</style>
-  <script type="text/javascript"> function DoNav(url){document.location.href = url; }</script>
+  td.logo{width:310px; height:110px;}
+  td.headline{padding-left: 5px;padding-right: 25px;}
+  td.user_cell{padding: 5px;}
+  td{padding: 1px;}
+  td{vertical-align: top; text-align: left;}
+  td.header{width: 220px;}
+  td.inter_heading{vertical-align: bottom;  height:33px;}
+  td.freifeld{display: block; width:400px; height: 200px; overflow-y: scroll}
+  td.key{height:25px; width: 100px;}
+  td.value{width: 200px;}
+  td.links{text-align: right; width: 180px;}
+  td.small{font-size: 70%;}
+  input[type=text], input[type=password], input[type=email], input[type=number]{border: 1px solid grey;}
+  textarea{border-style: none;}
+
+</style>
+<script type="text/javascript"> function tr_click(url){document.location.href = url; }</script>
 </head>
+
+
+
 <body>
-	<table width="100%" cellpadding="5" cellspacing="1" border="1">
-    <tr>
-      <td class="logo" colspan="5"><a href="/burgis/index.php"><img class="logo" src="files/logo_burgis.png"></a></td>
-    </tr>
-		<tr>
-			<?
-			// Schleife macht aus den $fieldnames der DB Überschriften für die Tabelle
-			foreach ($fieldnames AS $field){
-				echo "<td class=\"headline\">".$field."</td>\n";
-			}
-			echo "<td class=\"userrow\"><a class=\"green\" href=\"user.php?new\">neue Person</a></td>\n";
-			?></tr><?php
-			// Schleift durch das multi Array, erst jeder User eine Reihe, dann jeder Item eine Splate
-			for ($i = 0;$i < count($rows);$i++) {
-			    echo "<tr onclick=\"DoNav('user.php?id=" . $rows[$i][0] . "')\" class=\"hover pointer\" >\n";
-			    for ($j = 0;$j < count($rows[$i]);$j++) {
-			        echo "<td>" . $rows[$i][$j] . "</td>\n";
-			    }
-			    // echo "<td><a class=\"blue\" href=\"user.php?id=" . $rows[$i][0] . "\">Details</a></td>\n";
-			    echo "</tr>\n";
-			} ?>
-		</table>
+<!-- PAGE -->
+<table>
+  <tr>
+    <td colspan="8">
+    <!-- HEADER -->
+    <table>
+      <tr>
+        <td class="logo"><a href="/burgis/index.php"><img class="logo" src="files/Stina_2_100.png"></a></td>
+        <td class="header">
+        <!-- DATENSATZ -->
+          <table>
+            <tr><td colspan="2"><h1><? echo $app_name; ?></h1></td></tr>
+            <!-- <tr><td class="small">&nbsp;</td><td class="small">&nbsp;</td></tr> -->
+            <!-- <tr><td class="small">&nbsp;</td><td class="small">&nbsp;</td></tr> -->
+            <tr><td class="small">&nbsp;</td><td class="small">&nbsp;</td></tr>
+          </table>
+        <!-- DATENSATZ -->
+        </td>
+        <td class="header">
+        <!-- HYPERLINKS -->
+          <table>
+            <tr><td class="links"><a class="green" href="user.php?new">Person anlegen</a></td></tr>
+            <tr><td class="links">&nbsp;</td></tr>
+            <tr><td class="links">&nbsp;</td></tr>
+            <tr><td class="links"><a class="red" href="index.php?logout">abmelden</a></td></tr>
+          </table>
+        <!-- HYPERLINKS -->
+        </td>
+      </tr>
+    </table>
+    <!-- HEADER -->
+    </td>
+  </tr>
+  <tr>
+    <td>
+    <table>
+      <tr>
+    <?
+    // Schleife macht aus den $fieldnames der DB Überschriften für die Tabelle
+    foreach ($fieldnames AS $field){
+      echo "<td class=\"headline\"><h3>".$field."</h3></td>\n";
+    }
+
+    ?></tr><?php
+    // Schleift durch das multi Array, erst jeder User eine Reihe, dann jeder Item eine Splate
+    for ($i = 0;$i < count($rows);$i++) {
+        echo "<tr onclick=\"tr_click('user.php?id=" . $rows[$i][0] . "')\" class=\"hover pointer\" >\n";
+        echo "<td class=\"user_cell\"><a class=\"blue\" href=\"user.php?id=" . $rows[$i][0] . "\">" . $rows[$i][0] . "</a></td>\n";
+        for ($j = 1;$j < count($rows[$i]);$j++) {
+            echo "<td  class=\"user_cell\" >" . $rows[$i][$j] . "</td>\n";
+        }
+        echo "</tr>\n";
+    } ?>
+
+
+  </table>
 </body>
 </html>

@@ -1,16 +1,18 @@
 <?php
 if( isset($_GET['id']) ){$id = $_GET['id'];}
+if( isset($_POST['id']) ){$id = $_POST['id'];}
 
 
 // aktuelle Zeit für das "geaendert" FIELD
 $dt = new DateTime("now", new DateTimeZone('Europe/Berlin'));
 $local_time =  $dt->format('d.m.Y H:i');
+$local_time_sort =  $dt->format('Y_m_d_H_i_');
 
 
 // make connection
-$db = new SQLite3('data1.db');
+$filename = 'files/data.db';
 $tablename = 'users';
-
+$db = new SQLite3($filename);
 
 // create a new user
 if (isset($_POST['new_user'])) {
@@ -26,6 +28,7 @@ if (isset($_POST['new_user'])) {
   $db->exec($query);
   // get the id of the new user to show him
   $id = $db->querySingle("SELECT id FROM $tablename WHERE id = (SELECT MAX(id) FROM $tablename) order by id desc limit 1");
+  copy($filename, "files/archive/".$local_time_sort."new_".$id.".db");
 }
 
 // update the user data
@@ -39,6 +42,7 @@ if (isset($_POST['update_user'])) {
             $db->exec($query);
         }
     }
+    copy($filename, "files/archive/".$local_time_sort."update_".$id.".db");
 }
 
 // get the data
@@ -158,26 +162,41 @@ elseif(isset($_GET['new'])){
     a.green:hover{color: #173e12;}
     a.red, a.red:visited{color: #9a2d3a;}
     a.red:hover{color: #3e1217;}
-    td{padding: 1px;}
-    td{vertical-align: top; text-align: left;}
     td>h1{display: inline;font-size: 2em;font-weight: bold; }
     td>h2{display: inline;font-size: 1.5em;font-weight: bold; }
     td>h3{display: inline;font-size: 1.2em;font-weight: bold; }
+  	table, tr, td{border-style:none;  border-bottom:0px solid #eee; border-collapse: collapse;}
+    tr.pointer{cursor:pointer;}
+    tr.hover{transition: 0.3s;}
+    tr.hover:hover:nth-child(5n+1) {background: #9fa6e3}
+    tr.hover:hover:nth-child(5n+2) {background: #9fe3cd}
+    tr.hover:hover:nth-child(5n+3) {background: #e3b29f}
+    tr.hover:hover:nth-child(5n+4) {background: #c2e39f}
+    tr.hover:hover:nth-child(5n+5) {background: #e39fdd}
     td.logo{width:310px; height:110px;}
+    td.headline{font-weight: bold;}
+    td.user_cell{padding: 5px;}
+    td{padding: 1px;}
+    td{vertical-align: top; text-align: left;}
     td.header{width: 220px;}
     td.inter_heading{vertical-align: bottom;  height:33px;}
     td.freifeld{display: block; width:400px; height: 200px; overflow-y: scroll}
     td.key{height:25px; width: 100px;}
     td.value{width: 200px;}
     td.links{text-align: right; width: 180px;}
-    td.red > a{color:red;}
-    .colspan2{flex: 2;}
+    td.small{font-size: 70%;}
     input[type=text], input[type=password], input[type=email], input[type=number]{border: 1px solid grey;}
     textarea{border-style: none;}
   </style>
 </head>
+
+
+</style>
+<script type="text/javascript"> function tr_click(url){document.location.href = url; }</script>
+</head>
+
+
 <body>
-<div class="page">
 <!-- PAGE -->
 <table>
   <tr>
@@ -185,13 +204,14 @@ elseif(isset($_GET['new'])){
     <!-- HEADER -->
     <table>
       <tr>
-        <td class="logo"><a href="/burgis/index.php"><img class="logo" src="files/logo_burgis.png"></a></td>
+        <td class="logo"><a href="/burgis/index.php"><img class="logo" src="files/Stina_2_100.png"></a></td>
         <td class="header">
         <!-- DATENSATZ -->
           <table>
             <tr><td colspan="2"><h1><? echo $name_header; ?></h1></td></tr>
-            <tr><td>erstellt: </td><td> <? echo $erstellt; ?></td></tr>
-            <tr><td>geändert: </td><td> <? echo $geaendert; ?></td></tr>
+            <tr><td class="small">&nbsp;</td><td class="small">&nbsp;</td></tr>
+            <tr><td class="small">erstellt: </td><td class="small"> <? echo $erstellt; ?></td></tr>
+            <tr><td class="small">geändert: </td><td class="small"> <? echo $geaendert; ?></td></tr>
           </table>
         <!-- DATENSATZ -->
         </td>
@@ -249,4 +269,5 @@ elseif(isset($_GET['new'])){
 
 </table>
 <!-- PAGE -->
-</div>
+</body>
+</html>
