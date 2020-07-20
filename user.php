@@ -1,8 +1,24 @@
 <?php
+
+// directmail
+
+// https://www.php-kurs.com/loesung-einlogg-script.htm
+session_start();
+$_SESSION['last_visit'] = time();
+$session_timeout = 1800;
+if((time() - $_SESSION['last_visit']) > $session_timeout) {session_destroy();}
+if ( isset($_GET['logout'])){ session_destroy(); header('Location: index.php'); exit;}
+if ( isset($_POST['benutzername']) and $_POST['benutzername'] != "" and isset($_POST['kennwort']) and $_POST['kennwort'] != ""  )
+{if ($_POST['benutzername'] == "admin" AND $_POST['kennwort'] == "admin" or $_POST['benutzername'] == "finanzen" AND $_POST['kennwort'] == "finanzen" or $_POST['benutzername'] == "verwaltung" AND $_POST['kennwort'] == "verwaltung" )
+{$_SESSION['benutzername'] = $_POST['benutzername']; $_SESSION['eingeloggt'] = true;} //echo "<b>einloggen erfolgreich</b>";}
+else{echo "<b>ungültige Eingabe</b>"; $_SESSION['eingeloggt'] = false;}}
+if ( isset($_SESSION['eingeloggt']) and $_SESSION['eingeloggt'] == true ); //{echo "<h1>Hallo ". $_SESSION['benutzername'] . "</h1>";}
+else{echo '<form action="'. $_SERVER['SCRIPT_NAME'] .'" method="POST"><p>Benutzername:<br><input type="text" name="benutzername" value=""><p>Kennwort:<br><input type="password" name="kennwort" value=""><p><input type="Submit" value="einloggen"></form>';exit;}
+
 if( isset($_GET['id']) ){$id = $_GET['id'];}
 if( isset($_POST['id']) ){$id = $_POST['id'];}
 
-
+$_SESSION['benutzername'];
 // aktuelle Zeit für das "geaendert" FIELD
 $dt = new DateTime("now", new DateTimeZone('Europe/Berlin'));
 $local_time =  $dt->format('d.m.Y H:i');
@@ -219,7 +235,7 @@ elseif(isset($_GET['new'])){
         <!-- HYPERLINKS -->
           <table>
             <tr><td class="links"><a class="green" href="index.php">Übersicht</a></td></tr>
-            <tr><td class="links">&nbsp; </td></tr>
+            <tr><td class="links"><a class="red" href="index.php?logout">abmelden</a></td></tr>
             <tr><td class="links"><? echo $update_link ?></td></tr>
             <tr><td class="links"><? echo $delete_link; ?></td></tr>
           </table>
@@ -230,14 +246,15 @@ elseif(isset($_GET['new'])){
     <!-- HEADER -->
     </td>
   </tr>
+  <form action="<?php echo $form_action; ?>" method="post" id="formular">
+  <input type="hidden" name="id" value="<?php echo $id; ?>">
+  <input type="hidden" name="geaendert" value="<?php echo $local_time; ?>">
+
 
   <!-- BLOCK PERSON -->
   <tr>
     <td>
     <table>
-      <form action="<?php echo $form_action; ?>" method="post" id="formular">
-      <input type="hidden" name="id" value="<?php echo $id; ?>">
-      <input type="hidden" name="geaendert" value="<?php echo $local_time; ?>">
       <tr>
         <td>
         <!-- LEFT TABLE -->
@@ -261,12 +278,45 @@ elseif(isset($_GET['new'])){
         <!-- RIGHT FIELD -->
         </td>
       </tr>
-      </form>
     </table>
     </td>
   </tr>
   <!-- BLOCK PERSON -->
 
+  <!-- BLOCK FINANZEN -->
+  <tr>
+    <td>
+    <table>
+      <tr>
+        <td>
+        <!-- LEFT TABLE -->
+          <table>
+            <tr><td class="inter_heading" colspan="2"><h2>Finanzen</h2></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $name; ?> <? echo $nachname; ?></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $eingezogen; ?></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $wg; ?></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $ausgezogen; ?></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $telefon; ?></td></tr>
+            <tr><td class="key">Geld: </td><td class="value"><? echo $email; ?></td></tr>
+          </table>
+        <!-- LEFT TABLE -->
+        </td>
+        <td>
+        <!-- RIGHT FIELD -->
+          <table>
+            <tr><td class="inter_heading"><h3>Freifeld Finanzen</h3></td></tr>
+            <tr><td class="freifeld" <? echo $textarea_css ?> > <? echo $freifeld_p ?></td></tr>
+          </table>
+        <!-- RIGHT FIELD -->
+        </td>
+      </tr>
+    </table>
+    </td>
+  </tr>
+  <!-- BLOCK FINANZEN -->
+
+
+</form>
 </table>
 <!-- PAGE -->
 </body>
